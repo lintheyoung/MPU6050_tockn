@@ -1,14 +1,16 @@
 #include "MPU6050_tockn.h"
 #include "Arduino.h"
 
-MPU6050::MPU6050(TwoWire &w){
+MPU6050::MPU6050(TwoWire &w, uint8_t address){
   wire = &w;
+  deviceAddress = address;
   accCoef = 0.02f;
   gyroCoef = 0.98f;
 }
 
-MPU6050::MPU6050(TwoWire &w, float aC, float gC){
+MPU6050::MPU6050(TwoWire &w, float aC, float gC, uint8_t address){
   wire = &w;
+  deviceAddress = address;
   accCoef = aC;
   gyroCoef = gC;
 }
@@ -28,18 +30,18 @@ void MPU6050::begin(){
 }
 
 void MPU6050::writeMPU6050(byte reg, byte data){
-  wire->beginTransmission(MPU6050_ADDR);
+  wire->beginTransmission(deviceAddress);
   wire->write(reg);
   wire->write(data);
   wire->endTransmission();
 }
 
 byte MPU6050::readMPU6050(byte reg) {
-  wire->beginTransmission(MPU6050_ADDR);
+  wire->beginTransmission(deviceAddress);
   wire->write(reg);
   wire->endTransmission(true);
-  wire->requestFrom(MPU6050_ADDR, 1);
-  byte data =  wire->read();
+  wire->requestFrom(deviceAddress, (uint8_t)1);
+  byte data = wire->read();
   return data;
 }
 
@@ -50,11 +52,11 @@ void MPU6050::setGyroOffsets(float x, float y, float z){
 }
 
 void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delayAfter){
-	float x = 0, y = 0, z = 0;
-	int16_t rx, ry, rz;
+  float x = 0, y = 0, z = 0;
+  int16_t rx, ry, rz;
 
   delay(delayBefore);
-	if(console){
+  if(console){
     Serial.println();
     Serial.println("========================================");
     Serial.println("Calculating gyro offsets");
@@ -64,10 +66,10 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
     if(console && i % 1000 == 0){
       Serial.print(".");
     }
-    wire->beginTransmission(MPU6050_ADDR);
+    wire->beginTransmission(deviceAddress);
     wire->write(0x43);
     wire->endTransmission(false);
-    wire->requestFrom((int)MPU6050_ADDR, 6);
+    wire->requestFrom(deviceAddress, (uint8_t)6);
 
     rx = wire->read() << 8 | wire->read();
     ry = wire->read() << 8 | wire->read();
@@ -89,15 +91,15 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
     Serial.print("Z : ");Serial.println(gyroZoffset);
     Serial.println("Program will start after 3 seconds");
     Serial.print("========================================");
-		delay(delayAfter);
-	}
+    delay(delayAfter);
+  }
 }
 
 void MPU6050::update(){
-	wire->beginTransmission(MPU6050_ADDR);
-	wire->write(0x3B);
-	wire->endTransmission(false);
-	wire->requestFrom((int)MPU6050_ADDR, 14);
+  wire->beginTransmission(deviceAddress);
+  wire->write(0x3B);
+  wire->endTransmission(false);
+  wire->requestFrom(deviceAddress, (uint8_t)14);
 
   rawAccX = wire->read() << 8 | wire->read();
   rawAccY = wire->read() << 8 | wire->read();
@@ -135,5 +137,4 @@ void MPU6050::update(){
   angleZ = angleGyroZ;
 
   preInterval = millis();
-
 }

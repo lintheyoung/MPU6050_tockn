@@ -4,7 +4,8 @@
 #include "Arduino.h"
 #include "Wire.h"
 
-#define MPU6050_ADDR         0x68
+#define MPU6050_DEFAULT_ADDR  0x68  // 默认地址
+
 #define MPU6050_SMPLRT_DIV   0x19
 #define MPU6050_CONFIG       0x1a
 #define MPU6050_GYRO_CONFIG  0x1b
@@ -17,8 +18,9 @@
 class MPU6050{
   public:
 
-  MPU6050(TwoWire &w);
-  MPU6050(TwoWire &w, float aC, float gC);
+  // 修改构造函数，添加 address 参数，提供默认值
+  MPU6050(TwoWire &w, uint8_t address = MPU6050_DEFAULT_ADDR);
+  MPU6050(TwoWire &w, float aC, float gC, uint8_t address = MPU6050_DEFAULT_ADDR);
 
   void begin();
 
@@ -47,7 +49,7 @@ class MPU6050{
   float getGyroY(){ return gyroY; };
   float getGyroZ(){ return gyroZ; };
 
-	void calcGyroOffsets(bool console = false, uint16_t delayBefore = 1000, uint16_t delayAfter = 3000);
+  void calcGyroOffsets(bool console = false, uint16_t delayBefore = 1000, uint16_t delayAfter = 3000);
 
   float getGyroXoffset(){ return gyroXoffset; };
   float getGyroYoffset(){ return gyroYoffset; };
@@ -69,16 +71,17 @@ class MPU6050{
   private:
 
   TwoWire *wire;
+  uint8_t deviceAddress; // I2C 地址
 
   int16_t rawAccX, rawAccY, rawAccZ, rawTemp,
-  rawGyroX, rawGyroY, rawGyroZ;
+          rawGyroX, rawGyroY, rawGyroZ;
 
   float gyroXoffset, gyroYoffset, gyroZoffset;
 
   float temp, accX, accY, accZ, gyroX, gyroY, gyroZ;
 
   float angleGyroX, angleGyroY, angleGyroZ,
-  angleAccX, angleAccY, angleAccZ;
+        angleAccX, angleAccY, angleAccZ;
 
   float angleX, angleY, angleZ;
 
